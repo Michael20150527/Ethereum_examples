@@ -9,16 +9,25 @@ pragma solidity >=0.8.2 <0.9.0;
 
 import "./EthToUsd.sol";
 
+error NotOwner();
+
 /**
 * 捐款合约
+* 减少gas消耗的优化措施：1. 常量加constant关键字；2. 只需在constructor中改变一次的变量加immutable关键字；3. 定义自己的error，减少使用require语句。
 */
 contract FundMe {
 
     using EthToUsd for uint;
 
-    address public owner;
+    // 不加immutable，部署时消耗的gas为848053
+    // 加immutable，部署时消耗的gas为821784
+    // 不加immutable，查看i_owner消耗的gas为2555
+    // 加immutable，查看i_owner消耗的gas为422 
+    address immutable public i_owner;
 
-    uint minimumUSD = 100;
+    // 不加constant，部署时消耗的gas为938265
+    // 加constant，部署时消耗的gas为912516
+    uint constant minimumUSD = 100;
 
     // address动态数组记录每个捐献者地址
     address[] public funders;
@@ -27,12 +36,18 @@ contract FundMe {
     mapping(address => uint) public addressToDonationAmount;
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not contract deployer!");
+        // 使用require时，"Not contract deployer!"字符串会被写到区块链上
+        // require(msg.sender == i_owner, "Not contract deployer!");
+        // 使用require时，部署合约消耗的gas为821770
+        // 不使用require，使用自定义错误时，部署合约消耗的gas为792856
+        if(msg.sender != i_owner) {
+            revert NotOwner();
+        }
         _;
     }
 
     constructor() {
-        owner = msg.sender;
+        i_owner = msg.sender;
     } 
 
     // payable表示可以往里存款
@@ -50,9 +65,9 @@ contract FundMe {
     }
 
     // 设置新的owner
-    function setNewOwner(address _newOwner) public onlyOwner {
-        owner = _newOwner;
-    }
+    // function setNewOwner(address _newOwner) public onlyOwner {
+    //     i_owner = _newOwner;
+    // }
 
     function withdraw() public onlyOwner {
         
