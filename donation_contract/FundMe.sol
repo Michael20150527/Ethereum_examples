@@ -64,6 +64,17 @@ contract FundMe {
         addressToDonationAmount[msg.sender] = msg.value;
     }
 
+    // Receive is a variant of fallback that is triggered when msg.data is empty
+    // 有个receive函数合约可以直接接收ether
+    receive() external payable {
+        // 即使是直接往合约转款，也要做记录
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
+    }
+
     // 设置新的owner
     // function setNewOwner(address _newOwner) public onlyOwner {
     //     i_owner = _newOwner;
