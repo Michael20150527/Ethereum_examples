@@ -8,7 +8,7 @@ interface ProxyInterface {
     // 一开始合约为V1
     function inc() external;
     // 合约升级为V2
-    function dec() external;
+    // function dec() external;
 }
 
 contract Proxy {
@@ -50,4 +50,19 @@ contract V2 {
     function dec() external {
         x -= 1;
     }
+}
+
+// 模拟客户端调用
+contract Client {
+    address proxy;
+
+    constructor(address _proxy) public {
+        proxy = _proxy;
+    }
+
+    function inc() public {
+        ProxyInterface pi = ProxyInterface(proxy);
+        pi.inc();
+    }
+
 }
